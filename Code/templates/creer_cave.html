@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Créer une cave{% endblock %}
+{% block content %}
+<div class="card">
+  <h3>Créer une cave</h3>
+  <form method="post">
+    <label>Nom de la cave</label>
+    <input type="text" name="nom" required>
+    <button class="btn" type="submit">Créer</button>
+  </form>
+</div>
+{% endblock %}
+
+

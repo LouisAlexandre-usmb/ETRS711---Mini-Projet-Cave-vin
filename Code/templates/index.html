@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Accueil - Cave à vin{% endblock %}
+{% block content %}
+  <div class="welcome-container">
+    <div class="welcome-card">
+      <h2>Bienvenue{% if session.get('user_prenom') %}, {{ session['user_prenom'] }}{% endif %}</h2>
+      <div class="action-buttons">
+        <a class="btn-large" href="{{ url_for('creer_cave') }}">
+          <span class="btn-text">Créer une cave à vin</span>
+        </a>
+        <a class="btn-large" href="{{ url_for('mes_caves') }}">
+          <span class="btn-text">Gérer ma / mes cave(s)</span>
+        </a>
+        <a class="btn-large" href="{{ url_for('explorer_caves') }}">
+          <span class="btn-text">Consulter les caves des autres</span>
+        </a>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Mes caves{% endblock %}
+{% block content %}
+<h3>Mes caves</h3>
+{% if caves %}
+  {% for cave in caves %}
+    <div class="card">
+      <div style="display:flex; justify-content: space-between; align-items:center;">
+        <div>
+          <strong>{{ cave.nom }}</strong>
+        </div>
+        <div>
+          <a class="btn" href="{{ url_for('detail_cave', cave_id=cave.id_cave) }}">Gérer</a>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <p>Vous n'avez pas encore de cave.</p>
+{% endif %}
+{% endblock %}
+
+

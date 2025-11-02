@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Explorer toutes les caves{% endblock %}
+{% block content %}
+<h3>Explorer toutes les caves</h3>
+
+<div class="card">
+  <h4>Mes caves</h4>
+  {% for cave in caves if user_id == cave.utilisateur_id %}
+    <div style="display:flex; justify-content: space-between; padding:6px 0;">
+      <div><strong>{{ cave.nom }}</strong></div>
+      <div><a class="btn" href="{{ url_for('detail_cave', cave_id=cave.id_cave) }}">Voir</a></div>
+    </div>
+  {% else %}
+    <div>Aucune</div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <h4>Autres caves</h4>
+  {% for cave in caves if user_id != cave.utilisateur_id %}
+    <div style="display:flex; justify-content: space-between; padding:6px 0;">
+      <div><strong>{{ cave.nom }}</strong></div>
+      <div><a class="btn" href="{{ url_for('detail_cave', cave_id=cave.id_cave) }}">Voir</a></div>
+    </div>
+  {% else %}
+    <div>Aucune</div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+

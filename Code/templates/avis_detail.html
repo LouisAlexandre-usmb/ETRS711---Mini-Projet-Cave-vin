@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Avis - {{ nom }}{% endblock %}
+{% block content %}
+<h3>{{ domaine }} - {{ nom }} ({{ annee }})</h3>
+<div class="card">
+  <div>Type: {{ type }}</div>
+  <div>Région: {{ region }}</div>
+  <div>Note moyenne: {% if resume and resume.moyenne is not none %}{{ '%.1f'|format(resume.moyenne) }} / 20{% else %}n/a{% endif %} ({{ resume.nb_avis if resume else 0 }} avis)</div>
+</div>
+
+<div class="card">
+  <h4>Commentaires</h4>
+  {% if avis %}
+    {% for a in avis %}
+      <div style="border-bottom:1px solid #eee; padding:8px 0;">
+        <div>Note: {% if a.note is not none %}{{ '%.1f'|format(a.note) }} / 20{% else %}n/a{% endif %}</div>
+        <div>{{ a.commentaire }}</div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div>Aucun avis pour le moment.</div>
+  {% endif %}
+</div>
+{% endblock %}
+
+

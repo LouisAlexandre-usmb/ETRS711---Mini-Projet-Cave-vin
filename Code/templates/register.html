@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Créer un compte{% endblock %}
+{% block content %}
+<div class="card">
+  <h3>Créer un compte</h3>
+  <form method="post">
+    <label>Nom</label>
+    <input type="text" name="nom" required>
+    <label>Prénom</label>
+    <input type="text" name="prenom" required>
+    <label>Mot de passe</label>
+    <input type="password" name="mot_de_passe" required>
+    <button class="btn" type="submit">Créer le compte</button>
+  </form>
+  <p>Déjà un compte ? <a href="{{ url_for('login') }}">Se connecter</a></p>
+  </div>
+{% endblock %}
+
+

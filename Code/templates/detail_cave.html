@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}Cave - {{ cave.nom }}{% endblock %}
+{% block content %}
+<h3>{{ cave.nom }}</h3>
+
+
+
+<div class="card">
+  <h4 class="section-title">Bouteilles en cave</h4>
+  <div class="table-hint">Astuce: cliquez sur un en-tête de colonne pour trier.</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Photo</th>
+        <th><a class="filterable" title="Cliquer pour trier" href="{{ url_for('detail_cave', cave_id=cave.id_cave, tri='domaine', ordre='desc' if tri=='domaine' and ordre=='asc' else 'asc') }}">Domaine</a></th>
+        <th><a class="filterable" title="Cliquer pour trier" href="{{ url_for('detail_cave', cave_id=cave.id_cave, tri='nom', ordre='desc' if tri=='nom' and ordre=='asc' else 'asc') }}">Nom</a></th>
+        <th><a class="filterable" title="Cliquer pour trier" href="{{ url_for('detail_cave', cave_id=cave.id_cave, tri='type', ordre='desc' if tri=='type' and ordre=='asc' else 'asc') }}">Type</a></th>
+        <th class="nowrap"><a class="filterable" title="Cliquer pour trier" href="{{ url_for('detail_cave', cave_id=cave.id_cave, tri='annee', ordre='desc' if tri=='annee' and ordre=='asc' else 'asc') }}">Année</a></th>
+        <th><a class="filterable" title="Cliquer pour trier" href="{{ url_for('detail_cave', cave_id=cave.id_cave, tri='region', ordre='desc' if tri=='region' and ordre=='asc' else 'asc') }}">Région</a></th>
+        <th class="nowrap"><a class="filterable" title="Cliquer pour trier" href="{{ url_for('detail_cave', cave_id=cave.id_cave, tri='quantite', ordre='desc' if tri=='quantite' and ordre=='asc' else 'asc') }}">Quantité</a></th>
+        <th class="nowrap"><a class="filterable" title="Cliquer pour trier" href="{{ url_for('detail_cave', cave_id=cave.id_cave, tri='etagere', ordre='desc' if tri=='etagere' and ordre=='asc' else 'asc') }}">Étagère</a></th>
+        {% if est_proprietaire %}<th class="actions-col">Actions</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for g in groupes %}
+        <tr>
+          <td>
+            {% if g.photo_etiquette %}
+              <img src="{{ url_for('static', filename='images/' + g.photo_etiquette) }}" alt="Étiquette" class="bottle-img">
+            {% else %}
+              <span style="color: #ccc;">—</span>
+            {% endif %}
+          </td>
+          <td>{{ g.domaine_viticole }}</td>
+          <td>{{ g.nom }}</td>
+          <td>{{ g.type }}</td>
+          <td class="nowrap">{{ g.annee }}</td>
+          <td>{{ g.region }}</td>
+          <td class="nowrap">{{ g.quantite }}</td>
+          <td class="nowrap">{{ g.etagere_nom }}</td>
+          {% if est_proprietaire %}
+          <td class="actions-col">
+            <form method="post" action="{{ url_for('archiver_bouteille') }}" class="archive-form">
+              <input type="hidden" name="cave_id" value="{{ cave.id_cave }}">
+              <input type="hidden" name="domaine_viticole" value="{{ g.domaine_viticole }}">
+              <input type="hidden" name="nom" value="{{ g.nom }}">
+              <input type="hidden" name="type" value="{{ g.type }}">
+              <input type="hidden" name="annee" value="{{ g.annee }}">
+              <input type="hidden" name="region" value="{{ g.region }}">
+              <input type="number" name="note" placeholder="Note /20" step="0.1" min="0" max="20">
+              <input type="text" name="commentaire" placeholder="Commentaire">
+              <input type="number" name="quantite" placeholder="Quantité" min="1" max="{{ g.quantite }}" value="1">
+              <button class="btn" type="submit">Archiver</button>
+            </form>
+            <form method="post" action="{{ url_for('supprimer_bouteille') }}" style="display:flex; gap:8px; margin-top:8px;">
+              <input type="hidden" name="cave_id" value="{{ cave.id_cave }}">
+              <input type="hidden" name="domaine_viticole" value="{{ g.domaine_viticole }}">
+              <input type="hidden" name="nom" value="{{ g.nom }}">
+              <input type="hidden" name="type" value="{{ g.type }}">
+              <input type="hidden" name="annee" value="{{ g.annee }}">
+              <input type="hidden" name="region" value="{{ g.region }}">
+              <input type="number" name="quantite" placeholder="Quantité" min="1" max="{{ g.quantite }}" value="1">
+              <button class="btn" type="submit">Supprimer</button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if est_proprietaire %}
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h4>Ajouter une bouteille</h4>
+    <button class="btn" type="button" onclick="var f=document.getElementById('add-bottle-form'); f.style.display = f.style.display==='none' ? 'block' : 'none';">Afficher / Masquer</button>
+  </div>
+  <div id="add-bottle-form" style="display:none;">
+    {% if etageres|length == 0 %}
+      <div class="card" style="background:#fff7f7; border-color:#f3c2c2;">
+        Aucune étagère dans cette cave. Créez d'abord une étagère avant d'ajouter des bouteilles.
+      </div>
+    {% else %}
+      <form method="post" action="{{ url_for('ajouter_bouteille') }}" enctype="multipart/form-data">
+        <input type="hidden" name="cave_id" value="{{ cave.id_cave }}">
+        <label>Domaine</label><input name="domaine_viticole" required>
+        <label>Nom</label><input name="nom" required>
+        <label>Type</label>
+        <select name="type" required>
+          {% for t in allowed_types %}
+            <option value="{{ t }}">{{ t }}</option>
+          {% endfor %}
+        </select>
+        <label>Année</label><input name="annee" type="number" required>
+        <label>Région</label><input name="region">
+        <label>Prix (€)</label><input name="prix" type="number" step="0.01">
+        <label>Photo d'étiquette</label><input name="photo_etiquette" type="file" accept="image/png,image/jpeg,image/jpg">
+        <label>Quantité</label><input name="quantite" type="number" min="1" value="1">
+        <label>Étagère</label>
+        <select name="etagere_id" required>
+          {% for e in etageres %}
+            <option value="{{ e.id_etagere }}">{{ e.nom }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn" type="submit">Ajouter</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <h4>Étagères</h4>
+  <ul>
+    {% for e in etageres %}
+      <li>
+        {{ e.nom }} (capacité {{ e.capacite }})
+        {% if est_proprietaire %}
+          <form method="post" action="{{ url_for('supprimer_etagere') }}" style="display:inline; margin-left:8px;">
+            <input type="hidden" name="cave_id" value="{{ cave.id_cave }}">
+            <input type="hidden" name="id_etagere" value="{{ e.id_etagere }}">
+            <button class="btn" type="submit">Supprimer</button>
+          </form>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+  {% if est_proprietaire %}
+  <form method="post" action="{{ url_for('creer_etagere') }}">
+    <input type="hidden" name="cave_id" value="{{ cave.id_cave }}">
+    <label>Nom</label><input name="nom" required>
+    <label>Capacité</label><input name="capacite" type="number" min="1" required>
+    <button class="btn" type="submit">Ajouter une étagère</button>
+  </form>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+
