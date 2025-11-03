@@ -250,11 +250,7 @@ def archiver_bouteille():
         flash("Action non autorisée")
         return redirect(url_for("detail_cave", cave_id=cave_id))
 
-    # Sélectionne précisément les lignes bouteille_cave à archiver et à supprimer
-    if id_bouteille:
-        rows = BouteilleCave.selectionner_pour_archivage_par_id(conn, cave_id, int(id_bouteille), quantite)
-    else:
-        rows = BouteilleCave.selectionner_pour_archivage_par_caracteristiques(conn, cave_id, domaine, nom, type_vin, annee, region, quantite)
+    rows = BouteilleCave.selectionner_pour_archivage(conn, cave_id, domaine, nom, type_vin, annee, region, quantite)
 
     for row in rows:
         b = Bouteille(row["domaine_viticole"], row["nom"], row["type"], row["annee"], row["region"], row.get("photo_etiquette"), float(row["prix"]) if row.get("prix") is not None else None, row["id"], conn)
@@ -262,7 +258,7 @@ def archiver_bouteille():
                                note=float(note) if note else None, commentaire=commentaire,
                                utilisateur_id=session["user_id"], prix=b.prix, id_archive=None, conn=conn)
         ba.sauvegarder(b.id_bouteille)
-        BouteilleCave.supprimer_bc_par_id(conn, row["bc_id"])
+        BouteilleCave.supprimer_bouteille_cave(conn, row["bc_id"])
     return redirect(url_for("detail_cave", cave_id=cave_id))
 
 
@@ -291,7 +287,7 @@ def supprimer_bouteille():
     # Sélectionne les bouteilles à supprimer par leurs caractéristiques
     rows = BouteilleCave.selectionner_pour_suppression(conn, cave_id, domaine, nom, type_vin, annee, region, quantite)
     for row in rows:
-        BouteilleCave.supprimer_bc_par_id(conn, row["bc_id"])
+        BouteilleCave.supprimer_bouteille_cave(conn, row["bc_id"])
     return redirect(url_for("detail_cave", cave_id=cave_id))
 
 

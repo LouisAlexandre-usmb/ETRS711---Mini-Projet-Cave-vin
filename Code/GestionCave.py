@@ -90,16 +90,9 @@ class Etagere:
         self.id_etagere = cur.lastrowid
         return self.id_etagere
 
-    def compter_bouteilles(self) -> int:
-        # Compte le nombre de bouteilles sur cette étagère.
-        cur = self.conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM bouteille_cave WHERE id_etagere=%s", (self.id_etagere,))
-        row = cur.fetchone()
-        return int(row[0]) if row else 0
-
     def supprimer_si_vide(self) -> bool:
         # Supprime l'étagère si elle ne contient aucune bouteille.
-        if self.compter_bouteilles() > 0:
+        if self.compter_bouteilles_par_etagere(self.conn, self.id_etagere) > 0:
             return False
         cur = self.conn.cursor()
         cur.execute("DELETE FROM etagere WHERE id=%s", (self.id_etagere,))
@@ -199,30 +192,7 @@ class BouteilleCave(Bouteille):
         return cur.fetchall()
 
     @staticmethod
-    def supprimer_bc_par_id(conn, bc_id: int):
-        # Supprime une entrée bouteille_cave par son identifiant (ligne précise).
-        cur = conn.cursor()
-        cur.execute("DELETE FROM bouteille_cave WHERE id=%s", (bc_id,))
-
-    @staticmethod
-    def selectionner_pour_archivage_par_id(conn, cave_id: int, id_bouteille: int, quantite: int):
-        # Sélectionne des bouteilles à archiver par identifiant de bouteille.
-        cur = conn.cursor(dictionary=True)
-        cur.execute(
-            """
-            SELECT b.*, bc.id AS bc_id
-            FROM bouteille_cave bc
-            JOIN bouteille b ON b.id = bc.id_bouteille
-            JOIN etagere e ON e.id = bc.id_etagere
-            WHERE e.id_cave=%s AND b.id=%s
-            LIMIT %s
-            """,
-            (cave_id, id_bouteille, quantite),
-        )
-        return cur.fetchall()
-
-    @staticmethod
-    def selectionner_pour_archivage_par_caracteristiques(conn, cave_id: int, domaine: str, nom: str, type_vin: str, annee: int, region: str, quantite: int):
+    def selectionner_pour_archivage(conn, cave_id: int, domaine: str, nom: str, type_vin: str, annee: int, region: str, quantite: int):
         # Sélectionne des bouteilles à archiver par leurs caractéristiques.
         cur = conn.cursor(dictionary=True)
         cur.execute(
@@ -254,6 +224,12 @@ class BouteilleCave(Bouteille):
             (cave_id, domaine, nom, type_vin, annee, region, region, quantite),
         )
         return cur.fetchall()
+
+    @staticmethod
+    def supprimer_bouteille_cave(conn, bc_id: int):
+        # Supprime une entrée bouteille_cave par son identifiant (ligne précise).
+        cur = conn.cursor()
+        cur.execute("DELETE FROM bouteille_cave WHERE id=%s", (bc_id,))
 
 
 class BouteilleArchivee(Bouteille):
