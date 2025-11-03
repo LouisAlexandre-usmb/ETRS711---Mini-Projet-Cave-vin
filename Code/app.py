@@ -218,8 +218,8 @@ def ajouter_bouteille():
         return redirect(url_for("detail_cave", cave_id=cave_id))
 
     b = Bouteille(domaine, nom, type_vin, annee, region, photo_etiquette=photo_filename, prix=prix, conn=conn)
+    bid = b.sauvegarder()
     for _ in range(quantite):
-        bid = b.sauvegarder()
         bc = BouteilleCave(domaine, nom, type_vin, annee, region, etagere_id, photo_etiquette=photo_filename, prix=prix, id_bouteille=bid, conn=conn)
         bc.sauvegarder()
     return redirect(url_for("detail_cave", cave_id=cave_id))

@@ -193,14 +193,14 @@ class BouteilleCave(Bouteille):
               b.type,
               b.annee,
               b.region,
-              b.photo_etiquette,
+              MIN(b.photo_etiquette) AS photo_etiquette,
               e.nom AS etagere_nom,
               COUNT(*) AS quantite
             FROM bouteille_cave bc
             JOIN bouteille b ON b.id = bc.id_bouteille
             JOIN etagere e ON e.id = bc.id_etagere
             WHERE e.id_cave=%s
-            GROUP BY b.domaine_viticole, b.nom, b.type, b.annee, b.region, b.photo_etiquette, e.nom
+            GROUP BY b.domaine_viticole, b.nom, b.type, b.annee, b.region, e.nom
             ORDER BY b.nom, b.annee, e.nom
             """,
             (cave_id,),
@@ -309,11 +309,11 @@ class BouteilleArchivee(Bouteille):
         cur = conn.cursor(dictionary=True)
         cur.execute(
             """
-            SELECT b.domaine_viticole, b.nom, b.type, b.annee, b.region, b.photo_etiquette,
+            SELECT b.domaine_viticole, b.nom, b.type, b.annee, b.region, MIN(b.photo_etiquette) AS photo_etiquette,
                    AVG(ba.note) AS moyenne, COUNT(*) AS nb_avis
             FROM bouteille_archivee ba
             JOIN bouteille b ON b.id = ba.id_bouteille
-            GROUP BY b.domaine_viticole, b.nom, b.type, b.annee, b.region, b.photo_etiquette
+            GROUP BY b.domaine_viticole, b.nom, b.type, b.annee, b.region
             ORDER BY b.nom, b.annee
             """
         )
