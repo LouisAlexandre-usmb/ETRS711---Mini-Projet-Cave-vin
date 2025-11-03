@@ -16,6 +16,7 @@ class Utilisateur:
 
     def trouver_par_identifiants(self):
         # Retourne un utilisateur si la combinaison nom/prénom/mdp existe.
+        # Utilisé lors de la connexion (/login) pour authentifier et charger l'utilisateur en session.
         cur = self.conn.cursor(dictionary=True)
         cur.execute("SELECT * FROM utilisateur WHERE nom=%s AND prenom=%s AND mot_de_passe=%s", (self.nom, self.prenom, self.mot_de_passe))
         row = cur.fetchone()
@@ -25,6 +26,7 @@ class Utilisateur:
 
     def sauvegarder(self):
         # Insère l'utilisateur et met à jour son id.
+        # Utilisé lors de l'inscription (/register) pour créer un nouveau compte.
         cur = self.conn.cursor()
         cur.execute("INSERT INTO utilisateur (nom, prenom, mot_de_passe) VALUES (%s, %s, %s)", (self.nom, self.prenom, self.mot_de_passe))
         self.id_utilisateur = cur.lastrowid
@@ -41,6 +43,7 @@ class Cave:
 
     def sauvegarder(self):
         # Crée une cave et renvoie son identifiant.
+        # Utilisé par /caves/creer après validation pour créer la cave d'un utilisateur.
         cur = self.conn.cursor()
         cur.execute("INSERT INTO cave (nom, id_utilisateur) VALUES (%s, %s)", (self.nom, self.utilisateur_id))
         self.id_cave = cur.lastrowid
@@ -48,18 +51,21 @@ class Cave:
 
     def obtenir_par_utilisateur(self, user_id: int) -> List["Cave"]:
         # Liste les caves d'un utilisateur donné.
+        # Utilisé par /caves/mes pour afficher les caves de l'utilisateur connecté.
         cur = self.conn.cursor(dictionary=True)
         cur.execute("SELECT * FROM cave WHERE id_utilisateur=%s", (user_id,))
         return [Cave(row["nom"], row["id_utilisateur"], row["id"], self.conn) for row in cur.fetchall()]
 
     def obtenir_toutes(self) -> List["Cave"]:
         # Liste toutes les caves (exploration publique).
+        # Utilisé par /caves/explorer pour lister les caves de l'utilisateur connecté et celles des autres.
         cur = self.conn.cursor(dictionary=True)
         cur.execute("SELECT * FROM cave")
         return [Cave(row["nom"], row["id_utilisateur"], row["id"], self.conn) for row in cur.fetchall()]
 
     def trouver_par_id(self, cave_id: int):
         # Récupère une cave par son identifiant.
+        # Utilisé pour vérifier la propriété d'une cave.
         cur = self.conn.cursor(dictionary=True)
         cur.execute("SELECT * FROM cave WHERE id=%s", (cave_id,))
         row = cur.fetchone()
@@ -79,12 +85,14 @@ class Etagere:
 
     def obtenir_par_cave(self, cave_id: int) -> List["Etagere"]:
         # Retourne les étagères d'une cave.
+        # Utilisé par la page détail de cave pour afficher les étagères et remplir les listes déroulantes.
         cur = self.conn.cursor(dictionary=True)
         cur.execute("SELECT * FROM etagere WHERE id_cave=%s", (cave_id,))
         return [Etagere(row["nom"], row["capacite"], row["id_cave"], row["id"], self.conn) for row in cur.fetchall()]
 
     def sauvegarder(self):
         # Crée une étagère et renvoie son identifiant.
+        # Utilisé par /etagere/creer pour créer une étagère avec une capacité de stockage dans la cave.
         cur = self.conn.cursor()
         cur.execute("INSERT INTO etagere (nom, capacite, id_cave) VALUES (%s, %s, %s)", (self.nom, self.capacite, self.cave_id))
         self.id_etagere = cur.lastrowid
@@ -92,6 +100,7 @@ class Etagere:
 
     def supprimer_si_vide(self) -> bool:
         # Supprime l'étagère si elle ne contient aucune bouteille.
+        # Utilisé par /etagere/supprimer pour permettre la suppression d'une etagère mais uniquement si l'étagère ne contient aucune bouteille.
         if self.compter_bouteilles_par_etagere(self.conn, self.id_etagere) > 0:
             return False
         cur = self.conn.cursor()
@@ -101,6 +110,7 @@ class Etagere:
     @staticmethod
     def compter_par_cave(conn, cave_id: int) -> int:
         # Compte le nombre d'étagères dans une cave.
+        # Utilisé avant l'ajout de bouteilles pour s'assurer qu'au moins une étagère existe.
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM etagere WHERE id_cave=%s", (cave_id,))
         row = cur.fetchone()
@@ -109,6 +119,7 @@ class Etagere:
     @staticmethod
     def verifier_existe_dans_cave(conn, etagere_id: int, cave_id: int) -> bool:
         # Vérifie qu'une étagère existe et appartient à la cave donnée.
+        # Utilisé lors de l'ajout de bouteilles pour valider l'étagère sélectionnée.
         cur = conn.cursor()
         cur.execute("SELECT id FROM etagere WHERE id=%s AND id_cave=%s", (etagere_id, cave_id))
         return cur.fetchone() is not None
@@ -116,6 +127,7 @@ class Etagere:
     @staticmethod
     def obtenir_capacite(conn, etagere_id: int) -> Optional[int]:
         # Récupère la capacité d'une étagère.
+        # Utilisé pour contrôler la capacité avant d'ajouter des bouteilles.
         cur = conn.cursor()
         cur.execute("SELECT capacite FROM etagere WHERE id=%s", (etagere_id,))
         row = cur.fetchone()
@@ -124,6 +136,7 @@ class Etagere:
     @staticmethod
     def compter_bouteilles_par_etagere(conn, etagere_id: int) -> int:
         # Compte le nombre de bouteilles sur une étagère donnée.
+        # Utilisé pour empêcher d'ajouter des bouteilles au-delà de la capacité de l'étagère.
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM bouteille_cave WHERE id_etagere=%s", (etagere_id,))
         row = cur.fetchone()
@@ -145,6 +158,7 @@ class Bouteille:
 
     def sauvegarder(self):
         # Insère la bouteille dans le référentiel et met à jour son id.
+        # Utilisé lors de l'ajout; crée la définition de la bouteille (métadonnées) avant placement en cave.
         cur = self.conn.cursor()
         cur.execute(
             "INSERT INTO bouteille (domaine_viticole, nom, type, annee, region, photo_etiquette, prix) VALUES (%s, %s, %s, %s, %s, %s, %s)",
@@ -163,11 +177,13 @@ class BouteilleCave(Bouteille):
 
     def sauvegarder(self):
         # Lie la bouteille référentielle à une étagère de cave.
+        # Utilisé pour matérialiser chaque exemplaire dans la table bouteille_cave.
         cur = self.conn.cursor()
         cur.execute("INSERT INTO bouteille_cave (id_bouteille, id_etagere, date_mise_en_cave) VALUES (%s, %s, %s)", (self.id_bouteille, self.etagere_id, self.date_mise_en_cave))
 
     def obtenir_groupes_par_cave_par_etagere(self, cave_id: int):
         # Regroupe par caractéristiques et par étagère, inclut la photo éventuelle.
+        # Utilisé par la page détail de cave pour afficher des "lots" avec une quantité (COUNT). 
         cur = self.conn.cursor(dictionary=True)
         cur.execute(
             """
@@ -194,6 +210,7 @@ class BouteilleCave(Bouteille):
     @staticmethod
     def selectionner_pour_archivage(conn, cave_id: int, domaine: str, nom: str, type_vin: str, annee: int, region: str, quantite: int):
         # Sélectionne des bouteilles à archiver par leurs caractéristiques.
+        # Utilisé par /bouteilles/archiver pour récupérer N exemplaires à sortir de la cave et à archiver.
         cur = conn.cursor(dictionary=True)
         cur.execute(
             """
@@ -211,6 +228,7 @@ class BouteilleCave(Bouteille):
     @staticmethod
     def selectionner_pour_suppression(conn, cave_id: int, domaine: str, nom: str, type_vin: str, annee: int, region: str, quantite: int):
         # Sélectionne des bouteilles à supprimer par leurs caractéristiques.
+        # Utilisé par /bouteilles/supprimer pour retirer N exemplaires sans archivage.
         cur = conn.cursor(dictionary=True)
         cur.execute(
             """
@@ -228,6 +246,7 @@ class BouteilleCave(Bouteille):
     @staticmethod
     def supprimer_bouteille_cave(conn, bc_id: int):
         # Supprime une entrée bouteille_cave par son identifiant (ligne précise).
+        # Utilisé après sélection pour décrémenter la quantité effective en cave.
         cur = conn.cursor()
         cur.execute("DELETE FROM bouteille_cave WHERE id=%s", (bc_id,))
 
@@ -243,6 +262,7 @@ class BouteilleArchivee(Bouteille):
 
     def sauvegarder(self, id_bouteille: int):
         # Insère une ligne d'archive liée à une bouteille existante.
+        # Utilisé pendant l'archivage pour conserver note/commentaire et la date de sortie.
         cur = self.conn.cursor()
         cur.execute(
             "INSERT INTO bouteille_archivee (id_bouteille, id_utilisateur, date_archivage, note, commentaire) VALUES (%s, %s, %s, %s, %s)",
@@ -252,6 +272,7 @@ class BouteilleArchivee(Bouteille):
     @staticmethod
     def obtenir_resume_avis(conn, domaine: str, nom: str, type_vin: str, annee: int, region: str):
         # Retourne la moyenne des notes et le nombre d'avis pour un vin donné.
+        # Utilisé par /avis/details pour afficher le résumé (moyenne et nb d'avis).
         cur = conn.cursor(dictionary=True)
         cur.execute(
             """
@@ -267,6 +288,7 @@ class BouteilleArchivee(Bouteille):
     @staticmethod
     def obtenir_avis_detail(conn, domaine: str, nom: str, type_vin: str, annee: int, region: str):
         # Retourne tous les avis (notes et commentaires) pour un vin donné, triés par date décroissante.
+        # Utilisé par /avis/details pour lister les commentaires individuels.
         cur = conn.cursor(dictionary=True)
         cur.execute(
             """
@@ -283,6 +305,7 @@ class BouteilleArchivee(Bouteille):
     @staticmethod
     def obtenir_groupes_avis_avec_photos(conn):
         # Agrège les archives: moyenne/nb avis par vin + photo d'étiquette quand dispo.
+        # Utilisé par /avis pour afficher la liste des vins notés avec leur visuel.
         cur = conn.cursor(dictionary=True)
         cur.execute(
             """
